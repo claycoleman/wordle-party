@@ -2,7 +2,7 @@ import { getFirestore } from "~/lib/firebase";
 import { collection, addDoc, query, where, getDocs, updateDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { User } from "firebase/auth";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { queryLobbyGamesWithUniqueCode } from "~/lib/game";
 
 type Props = { user: User; fromGameOver?: boolean };
@@ -15,6 +15,8 @@ const INPUT_ID = "join-game-modal-input";
 export const JoinGameButton = ({ user, fromGameOver }: Props) => {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const attemptJoin = async () => {
     if (user == null) {
@@ -50,7 +52,13 @@ export const JoinGameButton = ({ user, fromGameOver }: Props) => {
 
   return (
     <>
-      <label htmlFor={MODAL_ID} className="btn btn-secondary modal-button ">
+      <label
+        htmlFor={MODAL_ID}
+        className="btn btn-secondary modal-button "
+        onClick={() => {
+          setTimeout(() => inputRef.current?.focus(), 250);
+        }}
+      >
         Join {fromGameOver ? "another" : "a"} game
       </label>
 
@@ -63,6 +71,7 @@ export const JoinGameButton = ({ user, fromGameOver }: Props) => {
           <div className="flex flex-col gap-4">
             <h3 className="text-lg font-bold">Enter a game code.</h3>
             <input
+              ref={inputRef}
               id={INPUT_ID}
               className="input input-sm input-bordered uppercase"
               type="text"
@@ -77,6 +86,9 @@ export const JoinGameButton = ({ user, fromGameOver }: Props) => {
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   attemptJoin();
+                } else if (e.key === "Escape") {
+                  console.log(document.getElementById(MODAL_ID));
+                  document.getElementById(MODAL_ID)?.click();
                 }
               }}
             />
