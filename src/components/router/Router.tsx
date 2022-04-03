@@ -1,5 +1,4 @@
-import { Dialog } from "@headlessui/react";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { Outlet, RouteObject, useRoutes, BrowserRouter, useNavigate } from "react-router-dom";
 
 const Loading = () => <p className="p-4 w-full h-full text-center">Loading...</p>;
@@ -12,34 +11,46 @@ const LIGHT_THEME = "emerald";
 const DARK_THEME = "custom";
 const THEME_STORAGE_KEY = "app-theme";
 
+let noTransitionsTimeout: null | ReturnType<typeof setTimeout>;
+
 function Layout() {
+  const [, _setToggle] = useState(false);
+  const toggle = () => _setToggle((old) => !old);
   const navigate = useNavigate();
 
-  useEffect(() => {
+  useMemo(() => {
     document.documentElement.dataset.theme = localStorage.getItem(THEME_STORAGE_KEY) ?? LIGHT_THEME;
   }, []);
 
   return (
-    <div>
-      <nav className="p-4 flex items-center justify-between gap-2">
+    <div className="">
+      <nav className="h-header p-4 flex items-center justify-between gap-2">
         <span
           className="cursor-pointer"
           onClick={() => {
             navigate("/");
           }}
         >
-          Wordle Party
+          Wordle Party 🎊
         </span>
         <button
           type="button"
           className="link"
           onClick={() => {
+            document.body.classList.add("no-transitions");
+
             document.documentElement.dataset.theme =
               document.documentElement.dataset.theme === LIGHT_THEME ? DARK_THEME : LIGHT_THEME;
             localStorage.setItem(THEME_STORAGE_KEY, document.documentElement.dataset.theme);
+            toggle();
+
+            noTransitionsTimeout != null && clearTimeout(noTransitionsTimeout);
+            noTransitionsTimeout = setTimeout(() => {
+              document.body.classList.remove("no-transitions");
+            }, 300);
           }}
         >
-          Toggle theme
+          {document.documentElement.dataset.theme === LIGHT_THEME ? "Dark mode" : "Light mode"}
         </button>
       </nav>
       <Outlet />

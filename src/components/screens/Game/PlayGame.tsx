@@ -13,6 +13,7 @@ import { simpleDeepCopy } from "~/lib/common";
 const WORD_LENGTH = 5;
 const MAX_GUESSES = 6;
 const INPUT_ID = "guess-word-input";
+const USED_LETTERS_ID = "wp-used-letters";
 
 enum GuessResult {
   Empty = 0,
@@ -27,7 +28,7 @@ type Props = {
 };
 
 const ALPHABET = "abcdefghijklmnopqrstuvwxyz".split("");
-const ALPHABET_KEYBOARD = ["qwertyuiop".split(""), "asdfghjkl".split(""), "zxcvbnm".split("")];
+const ALPHABET_KEYBOARD = ["qwertyuiop".split(""), "*asdfghjkl*".split(""), "zxcvbnm".split("")];
 
 let invalidWordTimeout: ReturnType<typeof setTimeout> | null = null;
 let animateInvalidWordTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -147,11 +148,11 @@ function PlayGame({ user, game }: Props): ReactElement {
   return (
     <>
       <Head title="Play" />
-      <div className="p-4 min-h-screen">
+      <div className="p-4 min-h-screen-with-header">
         <div className="text-center">
           <div className="w-full flex flex-col justify-center items-center">
             <h1 className="text-3xl font-bold">Round #{currentRound.roundNumber}</h1>
-            <div className="flex flex-row justify-start gap-4 max-w-full overflow-x-scroll">
+            <div className="flex flex-row justify-start gap-8 max-w-full overflow-x-scroll">
               {Object.entries(currentRound.data.userGuesses)
                 .sort(([userIDA], [userIDB]) => userIDA.localeCompare(userIDB))
                 .map(([userID, guesses]) => {
@@ -364,6 +365,32 @@ type UsedLettersProps = {
 };
 
 function UsedLetters({ guesses, targetWord, addLetter, deleteLetter, submitGuess }: UsedLettersProps) {
+  useEffect(() => {
+    const el = document.getElementById(USED_LETTERS_ID);
+    if (el == null) {
+      console.error(`no ${USED_LETTERS_ID}`);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([e]) => {
+        console.log(e.target, e.intersectionRatio);
+        const classes = ["pt-2", "pb-8", "border-t", "border-neutral", "mt-2"];
+        if (e.intersectionRatio < 1) {
+          e.target.classList.add(...classes);
+        } else {
+          e.target.classList.remove(...classes);
+        }
+      },
+      {
+        threshold: [1],
+      }
+    );
+
+    observer.observe(el);
+
+    return () => observer.unobserve(el);
+  }, []);
+
   const lettersMap = useMemo(() => {
     const newLettersMap: { [key: string]: GuessResult } = {};
     ALPHABET.forEach((letter) => {
@@ -381,14 +408,17 @@ function UsedLetters({ guesses, targetWord, addLetter, deleteLetter, submitGuess
     return newLettersMap;
   }, [guesses, targetWord]);
   return (
-    <div className="w-full flex flex-row justify-center items-center">
+    <div
+      id={USED_LETTERS_ID}
+      className="w-full max-w-full flex flex-row justify-center items-center min-w-0 sticky -bottom-px bg-base-100 transition-all"
+    >
       <div className="flex flex-row flex-wrap gap-2 w-full justify-center">
         {ALPHABET_KEYBOARD.map((row, rowIndex) => {
           return (
-            <div key={rowIndex} className=" flex flex-row gap-2 flex-wrap max-w-120">
+            <div key={rowIndex} className=" flex flex-row flex-grow gap-1 md:gap-2  max-w-full md:max-w-120">
               {rowIndex === ALPHABET_KEYBOARD.length - 1 && (
                 <div
-                  className={`flex flex-0 justify-center items-center cursor-pointer active:scale-110 border-2 uppercase card aspect-square w-16 h-10 rounded-md text-xs select-none ${getClassesForGuessResult(
+                  className={`flex flex-grow-3 flex-shrink-0 basis-0 justify-center items-center cursor-pointer active:scale-110 border-2 uppercase card aspect-square max-w-15 h-10 rounded-md text-xs select-none ${getClassesForGuessResult(
                     GuessResult.Incorrect
                   )}`}
                   onClick={() => {
@@ -398,31 +428,36 @@ function UsedLetters({ guesses, targetWord, addLetter, deleteLetter, submitGuess
                   Enter
                 </div>
               )}
-              {row.map((letter) => (
-                <div
-                  key={letter}
-                  className={`flex flex-0 justify-center items-center cursor-pointer active:scale-110  transition-colors duration-300 delay-${
-                    (MAX_GUESSES - 1) * 300 + 300
-                  } border-2 uppercase card aspect-square w-10 h-10 rounded-md text-xs select-none ${getClassesForGuessResult(
-                    lettersMap[letter]
-                  )}`}
-                  onClick={() => {
-                    addLetter(letter);
-                  }}
-                >
-                  {letter}
-                </div>
-              ))}
+              {row.map((letter, idx) => {
+                if (letter === "*") {
+                  return <div key={letter + idx} className="flex flex-grow-1 flex-shrink-0 basis-0 max-w-5 " />;
+                }
+                return (
+                  <div
+                    key={letter}
+                    className={`flex flex-grow-2 flex-shrink-0 basis-0 justify-center items-center cursor-pointer active:scale-110  transition-colors duration-300 delay-${
+                      (MAX_GUESSES - 1) * 300 + 300
+                    } border-2 uppercase card aspect-square max-w-10 h-10 rounded-md text-xs select-none ${getClassesForGuessResult(
+                      lettersMap[letter]
+                    )}`}
+                    onClick={() => {
+                      addLetter(letter);
+                    }}
+                  >
+                    {letter}
+                  </div>
+                );
+              })}
               {rowIndex === ALPHABET_KEYBOARD.length - 1 && (
                 <div
-                  className={`flex flex-0 justify-center items-center cursor-pointer active:scale-110 border-2 uppercase card aspect-square w-16 h-10 rounded-md text-xs select-none ${getClassesForGuessResult(
+                  className={`flex flex-grow-3 flex-shrink-0 basis-0 justify-center items-center cursor-pointer active:scale-110 border-2 uppercase card aspect-square max-w-15 h-10 rounded-md text-xs select-none ${getClassesForGuessResult(
                     GuessResult.Incorrect
                   )}`}
                   onClick={() => {
                     deleteLetter();
                   }}
                 >
-                  Delete
+                  Del
                 </div>
               )}
             </div>

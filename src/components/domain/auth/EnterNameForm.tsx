@@ -1,12 +1,10 @@
-import { getAuth, getFirestore } from "~/lib/firebase";
+import { getFirestore } from "~/lib/firebase";
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import { signInAnonymously, updateProfile } from "firebase/auth";
+import { User } from "firebase/auth";
 import { GameStatus, queryLobbyGamesWithUniqueCode } from "~/lib/game";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { useState } from "react";
 
-type Props = { fromGameOver?: boolean };
+type Props = { user: User; fromGameOver?: boolean };
 
 function generateUniqueCode() {
   let newStr = Math.random()
@@ -25,22 +23,12 @@ function generateUniqueCode() {
 
 const gamesCollection = collection(getFirestore(), "games");
 
-export const CreateGameButton = ({ fromGameOver }: Props) => {
-  const [creatingGame, setCreatingGame] = useState(false);
-  const [_user, loadingUser] = useAuthState(getAuth());
+export const EnterNameForm = ({ user, fromGameOver }: Props) => {
   const navigate = useNavigate();
 
   const handleClick = async () => {
-    if (loadingUser || creatingGame) {
-      return;
-    }
-
-    setCreatingGame(true);
-
-    let user = _user;
     if (user == null) {
-      const res = await signInAnonymously(getAuth());
-      user = res.user;
+      return;
     }
 
     // find a truly unique code
@@ -68,7 +56,7 @@ export const CreateGameButton = ({ fromGameOver }: Props) => {
   };
 
   return (
-    <button onClick={handleClick} type="button" className={`btn btn-primary ${creatingGame && "loading btn-disabled"}`}>
+    <button onClick={handleClick} type="button" className="btn btn-primary">
       Create a {fromGameOver && "new"} game
     </button>
   );

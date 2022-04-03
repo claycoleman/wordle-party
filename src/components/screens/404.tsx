@@ -4,7 +4,7 @@ function Page404() {
   return (
     <>
       <Head title={'The page is not found'}></Head>
-      <div className="hero min-h-screen bg-gray-800">
+      <div className="hero min-h-screen-with-header bg-gray-800">
         <div className="text-center hero-content text-3xl font-bold">
           <div>
             <h1>

@@ -12,6 +12,19 @@ module.exports = {
   },
   theme: {
     extend: {
+      flex: {
+        1: "1",
+        2: "2",
+        3: "3",
+      },
+      flexGrow: {
+        1: "1",
+        2: "2",
+        3: "3",
+      },
+      width: {
+        15: "3.75rem",
+      },
       minWidth: {
         40: "10rem",
         60: "15rem",
@@ -19,9 +32,19 @@ module.exports = {
         100: "25rem",
       },
       maxWidth: {
+        15: "3.75rem",
+        100: "25rem",
         120: "30rem",
         160: "40rem",
         200: "50rem",
+        full: "100%",
+        screen: "100vw",
+      },
+      minHeight: {
+        "screen-with-header": "calc(100vh - var(--header-height))",
+      },
+      height: {
+        header: "var(--header-height)",
       },
       keyframes: {
         pop: {

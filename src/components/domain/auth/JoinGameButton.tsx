@@ -1,31 +1,44 @@
-import { getFirestore } from "~/lib/firebase";
+import { getAuth, getFirestore } from "~/lib/firebase";
 import { collection, addDoc, query, where, getDocs, updateDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import { User } from "firebase/auth";
+import { signInAnonymously, User } from "firebase/auth";
 import { useEffect, useRef, useState } from "react";
 import { queryLobbyGamesWithUniqueCode } from "~/lib/game";
+import { useAuthState } from "react-firebase-hooks/auth";
 
-type Props = { user: User; fromGameOver?: boolean };
+type Props = { fromGameOver?: boolean };
 
 const gamesCollection = collection(getFirestore(), "games");
 
 const MODAL_ID = "join-game-modal";
 const INPUT_ID = "join-game-modal-input";
 
-export const JoinGameButton = ({ user, fromGameOver }: Props) => {
+export const JoinGameButton = ({ fromGameOver }: Props) => {
+  const [joiningGame, setJoiningGame] = useState(false);
+  const [_user, loading] = useAuthState(getAuth());
+
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const attemptJoin = async () => {
-    if (user == null) {
+    if (loading || joiningGame) {
       return;
+    }
+
+    setJoiningGame(true);
+
+    let user = _user;
+    if (user == null) {
+      const res = await signInAnonymously(getAuth());
+      user = res.user;
     }
 
     const uniqueCode = ((document.getElementById(INPUT_ID) as HTMLInputElement)?.value ?? "").toUpperCase();
     if (uniqueCode.length < 4) {
       setError(`Every game code is 4 letters long`);
+      setJoiningGame(false);
       return;
     }
 
@@ -33,6 +46,7 @@ export const JoinGameButton = ({ user, fromGameOver }: Props) => {
 
     if (res.docs.length === 0) {
       setError(`Couldn't find a game matching ${uniqueCode}`);
+      setJoiningGame(false);
       return;
     }
 
@@ -92,7 +106,11 @@ export const JoinGameButton = ({ user, fromGameOver }: Props) => {
                 }
               }}
             />
-            <button onClick={attemptJoin} type="button" className="btn btn-sm  btn-primary rounded-md ">
+            <button
+              onClick={attemptJoin}
+              type="button"
+              className={`btn btn-sm  btn-primary rounded-md ${joiningGame && "loading disabled"} `}
+            >
               Join
             </button>
             {error != null && (

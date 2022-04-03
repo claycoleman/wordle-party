@@ -79,7 +79,7 @@ function GameSummary({ user, game }: Props): ReactElement {
   return (
     <>
       <Head title="Play" />
-      <div className="p-4 min-h-screen">
+      <div className="p-4 min-h-screen-with-header">
         <div className="flex justify-center">
           <div className="max-w-120 w-full">
             <h1 className="text-3xl font-bold w-full text-center">Game over!</h1>
@@ -92,13 +92,14 @@ function GameSummary({ user, game }: Props): ReactElement {
               {orderedIDs.map((userID) => {
                 return (
                   <div key={userID}>
-                    <span className="font-semibold">{gameData.players[userID].name}:</span> {scoreMap[userID].toFixed(1)} guesses / round
+                    <span className="font-semibold">{gameData.players[userID].name}:</span>{" "}
+                    {scoreMap[userID].toFixed(1)} guesses / round
                   </div>
                 );
               })}
               <div className="divider" />
-              <CreateGameButton user={user} fromGameOver />
-              <JoinGameButton user={user} fromGameOver />
+              <CreateGameButton fromGameOver />
+              <JoinGameButton fromGameOver />
               <button className="btn btn-ghost " onClick={() => navigate("/")}>
                 Back to home
               </button>
